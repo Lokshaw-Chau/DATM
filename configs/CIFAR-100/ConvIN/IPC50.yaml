@@ -1,12 +1,13 @@
 dataset: CIFAR100
-device: [0,1,2,3]
+model: ConvNetD3
+device: [2]
 
 ipc: 50
 syn_steps: 80
 expert_epochs: 2
 lr_img: 1000
 lr_teacher: 0.01
-buffer_path: ../buffer_storage/
+buffer_path: /root/workspace/DATM/buffer_storage/cifar100
 data_path: ../dataset
 ema_decay: 0.9995
 Iteration: 10000
@@ -14,6 +15,7 @@ batch_syn: 1000
 
 # wandb
 project: CIFAR100_ipc50
+run_name: tesla
 
 num_eval: 1
 eval_it: 500

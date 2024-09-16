@@ -1,0 +1,50 @@
+dataset: CIFAR100
+model: ConvNetD3
+device: [3]
+
+syn_steps: 40
+expert_epochs: 3
+zca: True
+lr_img: 1000
+lr_teacher: 0.01
+buffer_path: /root/workspace/DATM/buffer_storage/cifar100
+data_path: ../dataset
+ema_decay: 0.9995
+Iteration: 10000
+batch_syn: 1000
+
+# wandb
+project: CIFAR100_ipc1
+run_name: exp111_tesla
+
+num_eval: 1
+eval_it: 500
+skip_first_eva: False
+
+lr_y: 10.0
+Momentum_y: 0.9
+threshold: 2.
+pix_init: samples_predicted_correctly
+expansion_end_epoch: 1000
+batch_train: 128
+min_start_epoch: 0
+current_max_start_epoch: 10
+max_start_epoch: 20
+lr_lr: 0.00001
+
+
+# PicAug
+ipc: 100 # numbers of init pic
+aug_ipc_list: [1, 10, 50, 100]
+Sequential_Generation_list: [True, True, False, False]
+current_max_start_epoch_list: [10, 30, 0, 0]
+max_start_epoch_list: [20, 50, 70, 70]
+expansion_end_epoch_list: [1000, 2000, 0, 0]
+min_start_epoch_list: [0, 20, 30, 30]
+expert_epochs_list: [3, 2, 2, 2]
+syn_steps_list: [40, 80, 80, 80]
+batch_syn_list: [100, 1000, 1000, 1000]
+lr_img_list: [1000, 1000, 1000, 50]
+lr_lr_list: [0.00001, 0.00001, 0.00001, 0.00001]
+lr_y_list: [10.0, 10.0, 10.0, 10.0]
+lr_teacher_list: [0.01, 0.01, 0.01, 0.01]

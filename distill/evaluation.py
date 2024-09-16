@@ -92,7 +92,7 @@ if __name__ == '__main__':
                         help='whether to use differentiable Siamese augmentation.')
     parser.add_argument('--dsa_strategy', type=str, default='color_crop_cutout_flip_scale_rotate',
                         help='differentiable Siamese augmentation strategy')
-    parser.add_argument('--data_path', type=str, default='data', help='dataset path')
+    parser.add_argument('--data_path', type=str, default='/root/workspace/DATM/dataset', help='dataset path')
     parser.add_argument('--zca', action='store_true', help="do ZCA whitening")
     parser.add_argument('--lr_teacher', type=float, default=0.01, help='initialization for synthetic learning rate')
     parser.add_argument('--no_aug', type=bool, default=False, help='this turns off diff aug during distillation')

@@ -15,7 +15,7 @@ Iteration: 10000
 batch_syn: 10
 
 # wandb
-project: CIFAR10_ipc1_picAug
+project: CIFAR10_ipc1
 
 num_eval: 1
 eval_it: 500

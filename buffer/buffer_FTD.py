@@ -100,8 +100,9 @@ def main(args):
             train_loss, train_acc = epoch("train", dataloader=trainloader, net=teacher_net, optimizer=teacher_optim,
                                         criterion=criterion, args=args, aug=True,scheduler=scheduler)
 
-            test_loss, test_acc = epoch("test", dataloader=testloader, net=teacher_net, optimizer=None,
-                                        criterion=criterion, args=args, aug=False, scheduler=scheduler)
+            # test_loss, test_acc = epoch("test", dataloader=testloader, net=teacher_net, optimizer=None,
+            #                             criterion=criterion, args=args, aug=False, scheduler=scheduler)
+            test_acc=0
 
             print("Itr: {}\tEpoch: {}\tTrain Acc: {}\tTest Acc: {}".format(it, e, train_acc, test_acc))
 

@@ -77,7 +77,7 @@ CFG.min_start_epoch = 0  # min epoch we can start at
 CFG.zca = True  # do ZCA whitening (use True if action='store_true')
 
 # Load all expert trajectories into RAM
-CFG.load_all = False  # only use if you can fit all expert trajectories into RAM (use True if action='store_true')
+CFG.load_all = True  # only use if you can fit all expert trajectories into RAM (use True if action='store_true')
 
 # Turn off differential augmentation during distillation
 CFG.no_aug = False  # this turns off diff aug during distillation
@@ -105,6 +105,7 @@ CFG.Momentum_y = 0.9
 
 # WanDB Project Name
 CFG.project = 'TEST'
+CFG.run_name = 'TEST'
 
 # Threshold
 CFG.threshold = 1.0
@@ -134,3 +135,18 @@ CFG.Initialize_Label_With_Another_Model = False
 CFG.Initialize_Label_Model = ""
 CFG.Initialize_Label_Model_Dir = ""
 CFG.Label_Model_Timestamp = -1
+
+# PicAug
+CFG.aug_ipc_list = [1, 10, 50, 100]
+CFG.Sequential_Generation_list = [True, True, False, False]
+CFG.current_max_start_epoch_list = [10, 30, 0, 0]
+CFG.max_start_epoch_list = [20, 50, 70, 70]
+CFG.expansion_end_epoch_list = [1000, 2000, 0, 0]
+CFG.min_start_epoch_list = [0, 20, 30, 30]
+CFG.expert_epochs_list = [3, 2, 2, 2]
+CFG.syn_steps_list = [40, 80, 80, 80]
+CFG.batch_syn_list = [100, 1000, 1000, 1000]
+CFG.lr_img_list = [1000, 1000, 1000, 50]
+CFG.lr_lr_list = [0.00001, 0.00001, 0.00001, 0.00001]
+CFG.lr_y_list = [10.0, 10.0, 10.0, 10.0]
+CFG.lr_teacher_list = [0.01, 0.01, 0.01, 0.01]

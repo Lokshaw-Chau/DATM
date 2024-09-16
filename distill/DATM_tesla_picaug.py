@@ -131,7 +131,7 @@ def main(args):
 
 
     ''' initialize the synthetic data '''
-    label_syn = torch.tensor([np.ones(args.ipc)*i for i in range(num_classes)], dtype=torch.long, requires_grad=False, device=args.device).view(-1) # [0,0,0, 1,1,1, ..., 9,9,9]
+    label_syn = torch.tensor([ [i] * args.ipc for i in range(num_classes)], dtype=torch.long, requires_grad=False, device=args.device).view(-1) # [0,0,0, 1,1,1, ..., 9,9,9]
 
 
     image_syn = torch.randn(size=(num_classes * args.ipc, channel, im_size[0], im_size[1]), dtype=torch.float)
@@ -145,9 +145,11 @@ def main(args):
     expert_dir = os.path.join(expert_dir, args.model)
     print("Expert Dir: {}".format(expert_dir))
     if args.load_all:
+        expert_files = []
         buffer = []
         n = 0
         while os.path.exists(os.path.join(expert_dir, "replay_buffer_{}.pt".format(n))):
+            expert_files.append(os.path.join(expert_dir, "replay_buffer_{}.pt".format(n)))
             buffer = buffer + torch.load(os.path.join(expert_dir, "replay_buffer_{}.pt".format(n)))
             n += 1
         if n == 0:
@@ -365,7 +367,6 @@ def main(args):
                         net_eval = get_network(model_eval, channel, num_classes, im_size, dist=True).to(device) # get a random model
 
                     # eval_labs = label_syn.detach().to(device)
-                    
                     image_save = torch.zeros((num_classes * args.real_ipc, channel, im_size[0], im_size[1]), dtype=torch.float)
                     eval_labs = torch.zeros((num_classes * args.real_ipc, label_syn.shape[1]), dtype=torch.long, requires_grad=False, device=args.device)
                     with torch.no_grad():
@@ -373,7 +374,7 @@ def main(args):
                         for c in range(num_classes):
                             image_save[c * args.real_ipc:(c + 1) * args.real_ipc] = image_syn[(c * args.ipc): (c * args.ipc + args.real_ipc)]
                             eval_labs[c * args.real_ipc:(c + 1) * args.real_ipc] = label_syn[(c * args.ipc): (c * args.ipc + args.real_ipc)]
-
+                    
                     image_syn_eval, label_syn_eval = copy.deepcopy(image_save.detach()).to(device), copy.deepcopy(eval_labs.detach()).to(device) # avoid any unaware modification
 
                     args.lr_net = syn_lr.item()
@@ -395,17 +396,18 @@ def main(args):
                 wandb.log({'Max_Accuracy/{}'.format(model_eval): best_acc[model_eval]}, step=it)
                 wandb.log({'Std/{}'.format(model_eval): acc_test_std}, step=it)
                 wandb.log({'Max_Std/{}'.format(model_eval): best_std[model_eval]}, step=it)
+        
         # only save real_ipc images
         if it in eval_it_pool and (save_this_it or it % 1000 == 0):
             image_save = torch.zeros((num_classes * args.real_ipc, channel, im_size[0], im_size[1]), dtype=torch.float)
             eval_labs = torch.zeros((num_classes * args.real_ipc, label_syn.shape[1]), dtype=torch.long, requires_grad=False, device=args.device)
             with torch.no_grad():
-            #   image_save = image_syn.to(device)
+                # image_save = image_syn.cuda()
                 for c in range(num_classes):
                     image_save[c * args.real_ipc:(c + 1) * args.real_ipc] = image_syn[c * args.ipc:c * args.ipc + args.real_ipc]
                     eval_labs[c * args.real_ipc:(c + 1) * args.real_ipc] = label_syn[c * args.ipc:c * args.ipc + args.real_ipc]
+            
             with torch.no_grad():
-                # image_save = image_syn.cuda()
                 save_dir = os.path.join(".", "logged_files", args.dataset, str(args.real_ipc), args.model, wandb.run.name)
 
                 if not os.path.exists(save_dir):
@@ -499,12 +501,12 @@ def main(args):
                 random.shuffle(buffer_id)
 
         # Only match easy traj. in the early stage
-
         for aug in range(2):
+
             if aug == 0:
                 choose_ipc_idx = 0
             else:
-                choose_ipc_idx = random.randint(1, len(args.aug_ipc_list))
+                choose_ipc_idx = random.randint(1, len(args.aug_ipc_list)-1)
                 
             choose_ipc = args.aug_ipc_list[choose_ipc_idx]
             Sequential_Generation = args.Sequential_Generation_list[choose_ipc_idx]
@@ -523,24 +525,23 @@ def main(args):
             for optim, lr in zip([optimizer_img, optimizer_lr, optimizer_y], [lr_img, lr_lr, lr_y]):
                 for param_group in optim.param_groups:
                     param_group['lr'] = lr
-                 
+
             if Sequential_Generation:
                 Upper_Bound = current_max_start_epoch + int((max_start_epoch-current_max_start_epoch) * it/(expansion_end_epoch))
                 Upper_Bound = min(Upper_Bound, max_start_epoch)
             else:
                 Upper_Bound = max_start_epoch
-                
+
             start_epoch = np.random.randint(min_start_epoch, Upper_Bound)
+
             starting_params = expert_trajectory[start_epoch]
             target_params = expert_trajectory[start_epoch+expert_epochs]
             target_params = torch.cat([p.data.to(args.device).reshape(-1) for p in target_params], 0)
             student_params = [torch.cat([p.data.to(args.device).reshape(-1) for p in starting_params], 0).requires_grad_(True)]
             starting_params = torch.cat([p.data.to(args.device).reshape(-1) for p in starting_params], 0)
-
+            param_dist = torch.nn.functional.mse_loss(starting_params, target_params, reduction="sum")
             # syn_images = image_syn
             # y_hat = label_syn
-            # syn_images = torch.zeros((num_classes * choose_ipc, channel, im_size[0], im_size[1]), dtype=torch.float, requires_grad=True)
-            # y_hat = torch.zeros((num_classes * choose_ipc, label_syn.shape[1]), dtype=torch.float, requires_grad=True)
             syn_images = None
             y_hat = None
             for c in range(num_classes): 
@@ -551,9 +552,18 @@ def main(args):
                     syn_images = torch.cat((syn_images, image_syn[c * args.ipc:c * args.ipc + choose_ipc]), 0)
                     y_hat = torch.cat((y_hat, label_syn[c * args.ipc:c * args.ipc + choose_ipc]), 0)
 
-            param_loss_list = []
-            param_dist_list = []
+            syn_image_gradients = torch.zeros(syn_images.shape).to(args.device)
+            syn_label_gradients = torch.zeros(y_hat.shape).to(args.device)
+            x_list = []
+            original_x_list = []
+            y_list = []
+            original_y_list = []
             indices_chunks = []
+            gradient_sum = torch.zeros(student_params[-1].shape).to(args.device)
+            indices_chunks_copy = []
+
+            
+
 
             for step in range(syn_steps):
                 if not indices_chunks:
@@ -561,13 +571,16 @@ def main(args):
                     indices_chunks = list(torch.split(indices, batch_syn))
 
                 these_indices = indices_chunks.pop()
+                indices_chunks_copy.append(these_indices)
 
                 x = syn_images[these_indices]
                 this_y = y_hat[these_indices]
-
-
+                original_x_list.append(x)
+                original_y_list.append(this_y)
                 if args.dsa and (not args.no_aug):
                     x = DiffAugment(x, args.dsa_strategy, param=args.dsa_param)
+                x_list.append(x.clone())
+                y_list.append(this_y.clone())
 
                 if args.distributed:
                     forward_params = student_params[-1].unsqueeze(0).expand(torch.cuda.device_count(), -1)
@@ -576,45 +589,75 @@ def main(args):
                 x = student_net(x, flat_param=forward_params)
                 ce_loss = criterion(x, this_y)
 
-                grad = torch.autograd.grad(ce_loss, student_params[-1], create_graph=True)[0]
+                grad = torch.autograd.grad(ce_loss, forward_params, create_graph=True, retain_graph=True)[0]
 
-                student_params.append(student_params[-1] - syn_lr * grad)
+                detached_grad = grad.detach().clone()
+                student_params.append(student_params[-1] - syn_lr.item() * detached_grad)
+                gradient_sum += detached_grad
 
-            param_loss = torch.tensor(0.0).to(args.device)
-            param_dist = torch.tensor(0.0).to(args.device)
+                del grad
 
-            param_loss += torch.nn.functional.mse_loss(student_params[-1], target_params, reduction="sum")
-            param_dist += torch.nn.functional.mse_loss(starting_params, target_params, reduction="sum")
+            # --------Compute the gradients regarding input image and learning rate---------
+            # compute gradients invoving 2 gradients
+            for i in range(syn_steps):
+                # compute gradients for w_i
+                w_i = student_params[i]
+                output_i = student_net(x_list[i], flat_param = w_i)
+                if batch_syn:
+                    ce_loss_i = criterion(output_i, y_list[i])
+                else:
+                    ce_loss_i = criterion(output_i, y_hat)
 
-            param_loss_list.append(param_loss)
-            param_dist_list.append(param_dist)
-            
-            param_loss /= num_params
-            param_dist /= num_params
+                grad_i = torch.autograd.grad(ce_loss_i, w_i, create_graph=True, retain_graph=True)[0]
+                single_term = syn_lr.item() * (target_params - starting_params)
+                square_term = (syn_lr.item() ** 2) * gradient_sum
 
-            param_loss /= param_dist
+                total_term = 2 * (single_term + square_term) @ grad_i / param_dist
 
-            grand_loss = param_loss
-            
-            optimizer_img.zero_grad()
-            optimizer_lr.zero_grad()
-            optimizer_y.zero_grad()
-            
-            grand_loss.backward()
+                gradients_x, gradients_y = torch.autograd.grad(total_term, [original_x_list[i], original_y_list[i]] )
+                with torch.no_grad():
+                    syn_image_gradients[indices_chunks_copy[i]] += gradients_x
+                    syn_label_gradients[indices_chunks_copy[i]] += gradients_y
+            # ---------end of computing input image gradients and learning rates--------------
+            # all_image_syn_subsets = [image_syn[i * args.ipc:i * args.ipc + choose_ipc].clone() for i in range(num_classes)]
+            # for c in range(num_classes):
+            #     image_syn[c * args.ipc:c * args.ipc + choose_ipc].grad = syn_image_gradients[c * choose_ipc:(c + 1) * choose_ipc]
+            #     label_syn[c * args.ipc:c * args.ipc + choose_ipc].grad = syn_label_gradients[c * choose_ipc:(c + 1) * choose_ipc]
+            # image_syn.grad = syn_image_gradients
+            # label_syn.grad = syn_label_gradients
+            all_image_grads = torch.zeros_like(image_syn)
+            all_label_grads = torch.zeros_like(label_syn)
+            for c in range(num_classes):
+                all_image_grads[c * args.ipc:c * args.ipc + choose_ipc] = syn_image_gradients[c * choose_ipc:(c + 1) * choose_ipc]
+                all_label_grads[c * args.ipc:c * args.ipc + choose_ipc] = syn_label_gradients[c * choose_ipc:(c + 1) * choose_ipc]
+            image_syn.grad = all_image_grads
+            label_syn.grad = all_label_grads
+                
+            grand_loss = starting_params - syn_lr * gradient_sum - target_params
+            grand_loss = grand_loss.dot(grand_loss) / param_dist
+
+            lr_grad,  = torch.autograd.grad(grand_loss, syn_lr)
+            syn_lr.grad = lr_grad
 
             if grand_loss<=args.threshold:
                 optimizer_y.step()
                 optimizer_img.step()
                 optimizer_lr.step()
+                optimizer_img.zero_grad()
+                optimizer_lr.zero_grad()
+                optimizer_y.zero_grad()
             else:
                 wandb.log({"falts": start_epoch}, step=it)
 
 
+
+            # wandb.log({"Grand_Loss": grand_loss.detach().cpu(),
+            #         "Start_Epoch": start_epoch})
             if aug == 0:
-                wandb.log({"Grand_Loss": param_loss.detach().cpu(),
+                wandb.log({"Grand_Loss": grand_loss.detach().cpu(),
                         "Start_Epoch": start_epoch}, step=it)
             else:
-                wandb.log({"Grand_Loss_Aug": param_loss.detach().cpu(),
+                wandb.log({"Grand_Loss_Aug": grand_loss.detach().cpu(),
                         "Start_Epoch_Aug": start_epoch}, step=it)
 
             for _ in student_params:
@@ -639,6 +682,3 @@ if __name__ == '__main__':
         parser.add_argument(arg_name, type=type(value), default=value)
     args = parser.parse_args()
     main(args)
-
-
-

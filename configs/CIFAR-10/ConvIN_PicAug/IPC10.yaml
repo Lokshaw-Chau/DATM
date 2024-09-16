@@ -1,33 +1,35 @@
-dataset: CIFAR100
-device: [2]
+dataset: CIFAR10
+device: [3]
 
-ipc: 100
+ipc: 10
 syn_steps: 80
 expert_epochs: 2
-lr_img: 50
+lr_img: 100
 lr_teacher: 0.01
-buffer_path: /root/workspace/DATM/buffer_storage/cifar100
+buffer_path: ../buffer_storage/
 data_path: ../dataset
 ema_decay: 0.9995
 Iteration: 10000
-batch_syn: 1000
+batch_syn: 100
 
 # wandb
-project: CIFAR100_ipc100
-run_name: tesla
+project: CIFAR10_ipc10
 
 num_eval: 1
 eval_it: 500
 skip_first_eva: True
 
-lr_y: 10.0
+lr_y: 2.0
 Momentum_y: 0.9
 threshold: 1.
 pix_init: samples_predicted_correctly
-Sequential_Generation: False
 batch_train: 128
-min_start_epoch: 30
-max_start_epoch: 70
+
+min_start_epoch: 0
+current_max_start_epoch: 10
+max_start_epoch: 20
+expansion_end_epoch: 1000
+
 lr_lr: 0.00001
 zca: True
 
