@@ -65,12 +65,17 @@ def main(args):
     image_syn_eval = torch.load(args.data_dir)
     label_syn_eval = torch.load(args.label_dir)
     args.lr_net = torch.load(args.lr_dir)
+    avg_train_acc = []
+    avg_test_acc = []
 
     for model_eval in model_eval_pool:
         print('Evaluating: '+model_eval)
         network = get_network(model_eval, channel, num_classes, im_size, dist=False).to(args.device)  # get a random model
         _, acc_train, acc_test = evaluate_synset(0, copy.deepcopy(network), image_syn_eval, label_syn_eval, testloader, args, texture=False, train_criterion=soft_cri)
+        avg_test_acc.append(acc_test)
 
+    print('Average test accuracy: ', sum(avg_test_acc)/len(avg_test_acc))
+    print('Std test accuracy: ', np.std(avg_test_acc))
         
 
 

@@ -696,6 +696,8 @@ def get_eval_pool(eval_mode, model, model_eval):
         model_eval_pool = [model, 'ConvNet']
     elif eval_mode == 'BN':
         model_eval_pool = ['ConvNet','ConvNetBN','ResNet18','ResNet18BN','AlexNet', 'VGG11', 'ResNet18_AP']
+    elif eval_mode == 'Avg':
+        model_eval_pool = [model, model, model, model, model]
     else:
         model_eval_pool = [model_eval]
     return model_eval_pool
