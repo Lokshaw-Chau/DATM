@@ -1,6 +1,6 @@
 dataset: CIFAR100
 model: ConvNetD3
-device: [2]
+device: [0]
 
 ipc: 50
 syn_steps: 80

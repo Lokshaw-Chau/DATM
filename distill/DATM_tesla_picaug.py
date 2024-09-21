@@ -506,7 +506,10 @@ def main(args):
             if aug == 0:
                 choose_ipc_idx = 0
             else:
-                choose_ipc_idx = random.randint(1, len(args.aug_ipc_list)-1)
+                if it > 500:
+                    choose_ipc_idx = random.randint(6, 8)
+                else:
+                    choose_ipc_idx = random.randint(1, 6)
                 
             choose_ipc = args.aug_ipc_list[choose_ipc_idx]
             Sequential_Generation = args.Sequential_Generation_list[choose_ipc_idx]

@@ -72,6 +72,7 @@ def main(args):
 
     wandb.init(sync_tensorboard=False,
                project=args.project,
+               name=args.run_name,
                job_type="CleanRepo",
                config=args,
                )
