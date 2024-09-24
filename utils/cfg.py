@@ -150,3 +150,6 @@ CFG.lr_img_list = [1000, 1000, 1000, 50]
 CFG.lr_lr_list = [0.00001, 0.00001, 0.00001, 0.00001]
 CFG.lr_y_list = [10.0, 10.0, 10.0, 10.0]
 CFG.lr_teacher_list = [0.01, 0.01, 0.01, 0.01]
+
+# Mutual
+CFG.mutual_dist = 'KL'

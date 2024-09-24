@@ -1,6 +1,6 @@
 dataset: CIFAR100
 model: ConvNetD3
-device: [2]
+device: [3]
 
 syn_steps: 40
 expert_epochs: 3
@@ -15,7 +15,7 @@ batch_syn: 1000
 
 # wandb
 project: CIFAR100_ipc1
-run_name: exp112_tesla
+run_name: exp132_tesla
 
 num_eval: 1
 eval_it: 500

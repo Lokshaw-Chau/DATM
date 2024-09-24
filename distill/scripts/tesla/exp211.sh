@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=2 python /root/workspace/DATM/distill/DATM_tesla_mutual.py --cfg /root/workspace/DATM/configs/CIFAR-100/ConvIN_Mutual/IPC50-2-1-1.yaml
