@@ -3,7 +3,7 @@ model: ConvNetD3
 device: [0]
 
 ipc: 50
-syn_steps: 80
+syn_steps: 40
 expert_epochs: 2
 lr_img: 1000
 lr_teacher: 0.01
@@ -15,20 +15,19 @@ batch_syn: 1000
 
 # wandb
 project: CIFAR100_ipc50
-run_name: tesla
+run_name: tesle_pix_init
 
 num_eval: 1
 eval_it: 500
-skip_first_eva: False
+skip_first_eva: True
 
 lr_y: 10.0
 Momentum_y: 0.9
 threshold: 1.
-pix_init: real
+pix_init: samples_predicted_correctly
 Sequential_Generation: False
 batch_train: 128
 min_start_epoch: 20
 max_start_epoch: 70
 lr_lr: 0.00001
 zca: True
-

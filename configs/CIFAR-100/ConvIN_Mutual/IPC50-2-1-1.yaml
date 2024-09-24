@@ -1,9 +1,9 @@
 dataset: CIFAR100
 model: ConvNetD3
-device: [2]
+device: [0,1,2,3]
 
 ipc: 50
-syn_steps: 80
+syn_steps: 40
 expert_epochs: 2
 lr_img: 1000
 lr_teacher: 0.01
